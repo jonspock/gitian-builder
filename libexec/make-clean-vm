@@ -56,4 +56,19 @@ export LXC_ARCH=$ARCH
 BASE=base-$SUITE-$ARCH
 OUT=target-$SUITE-$ARCH
 
-true #Docker doesn't need to do anything
+case $VMSW in
+  KVM)
+    qemu-img create -f qcow2 -o backing_file="$BASE.qcow2" "$OUT.qcow2"
+    ;;
+  LXC)
+    cp -a --sparse=always $BASE $OUT
+    libexec/config-bootstrap-fixup
+    on-target -u root bash < target-bin/bootstrap-fixup
+    ;;
+  VBOX)
+    VBoxManage snapshot "Gitian-${SUITE}-${ARCH}" restore "Gitian-Clean"
+    ;;
+  DOCKER)
+    true #Docker doesn't need to do anything
+    ;;
+esac

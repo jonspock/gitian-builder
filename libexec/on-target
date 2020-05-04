@@ -46,4 +46,11 @@ fi
 #  exit 1
 #fi
 
-docker exec -u $TUSER -i gitian-target $*
+if [ -n "$USE_DOCKER" ]; then
+    docker exec -u $TUSER -i gitian-target $*
+elif [ -z "$USE_LXC" ]; then
+    ssh -oConnectTimeout=30 -oNoHostAuthenticationForLocalhost=yes -i ${GITIAN_BASE:-.}/var/id_rsa -p $VM_SSH_PORT $TUSER@localhost $*
+else
+    config-lxc
+    sudo $LXC_EXECUTE -n gitian -f var/lxc.config -- sudo -u $TUSER $ENV -i -- $*
+fi
